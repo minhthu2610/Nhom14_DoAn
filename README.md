@@ -1,4 +1,3 @@
-````markdown
 # Retail Product Clustering
 
 Đồ án cuối kỳ môn Khai phá dữ liệu.
@@ -7,7 +6,7 @@
 
 Dự án xây dựng hệ thống phân cụm sản phẩm bán lẻ dựa trên hành vi bán hàng bằng các thuật toán Data Mining như Hierarchical Clustering và KMeans.
 
-Dataset sử dụng là Online Retail II Dataset – dữ liệu bán lẻ thực tế từ UK, bao gồm thông tin giao dịch, sản phẩm, số lượng bán, giá bán và thời gian giao dịch.
+Dataset sử dụng là **Retail Store Inventory Forecasting Dataset** – dữ liệu bán lẻ tổng hợp mô phỏng hoạt động quản lý tồn kho thực tế, bao gồm thông tin giao dịch, sản phẩm, số lượng bán, mức tồn kho thực tế, điểm đặt hàng lại và thời gian giao hàng từ nhà cung cấp.
 
 Mục tiêu của dự án:
 - Phân tích hành vi bán hàng của sản phẩm
@@ -18,7 +17,7 @@ Mục tiêu của dự án:
 
 ---
 
-# Công nghệ sử dụng
+## Công nghệ sử dụng
 
 - Python
 - Pandas
@@ -31,14 +30,16 @@ Mục tiêu của dự án:
 
 ---
 
-# Cấu trúc project
+## Cấu trúc project
 
 ```text
 project/
 │
 ├── data/
 │   ├── raw/
+│   │   └── retail_store_inventory.csv
 │   └── processed/
+│       └── processed_retail_data.csv
 │
 ├── notebooks/
 │   ├── preprocessing.ipynb
@@ -55,46 +56,45 @@ project/
 ├── reports/
 │
 └── requirements.txt
-````
+```
 
 ---
 
-# Các bước thực hiện
+## Các bước thực hiện
 
-## 1. Tiền xử lý dữ liệu
+### 1. Tiền xử lý dữ liệu
 
 * Xử lý missing values
 * Xử lý duplicate
-* Loại bỏ dữ liệu bất thường
-* Clean StockCode không hợp lệ
+* Loại bỏ dữ liệu bất thường (Quantity <= 0, Price <= 0)
+* Xử lý outlier bằng phương pháp IQR trên các cột số
 * Chuẩn hóa dữ liệu bằng StandardScaler
 
-## 2. Trích xuất đặc trưng hành vi bán hàng
+### 2. Trích xuất đặc trưng hành vi bán hàng
 
-* total_sales
-* sale_frequency
-* revenue
-* sales_variance
-* days_since_last_sale
-* avg_inventory
-* stock_turnover
+* `total_sales` – Tổng số lượng bán
+* `sale_frequency` – Tần suất bán (số giao dịch)
+* `revenue` – Doanh thu
+* `sales_variance` – Độ biến động doanh số
+* `days_since_last_sale` – Số ngày chưa bán
+* `avg_inventory` – Tồn kho trung bình thực tế (lấy từ cột `Inventory_Level`)
+* `stock_turnover` – Tốc độ quay vòng tồn kho
 
-## 3. Phân cụm sản phẩm
+### 3. Phân cụm sản phẩm
 
-* Hierarchical Clustering
-* Agglomerative Clustering
+* Hierarchical Clustering (Agglomerative, linkage='ward')
 * KMeans
-* Dendrogram
-* Silhouette Score
+* Dendrogram + Elbow Method để xác định số cụm
+* Silhouette Score để đánh giá
 
-## 4. Trực quan hóa dữ liệu
+### 4. Trực quan hóa dữ liệu
 
 * Scatter Plot
-* Heatmap
+* Heatmap tương quan
 * Cluster Visualization
 * Dashboard
 
-## 5. Xây dựng ứng dụng web
+### 5. Xây dựng ứng dụng web
 
 * Hiển thị dataset
 * Hiển thị kết quả phân cụm
@@ -103,21 +103,21 @@ project/
 
 ---
 
-# Hướng dẫn cài đặt
+## Hướng dẫn cài đặt
 
-## Clone project
+### Clone project
 
 ```bash
 git clone <github-repository>
 ```
 
-## Tạo môi trường ảo
+### Tạo môi trường ảo
 
 ```bash
 python -m venv venv
 ```
 
-## Kích hoạt môi trường ảo
+### Kích hoạt môi trường ảo
 
 Windows PowerShell:
 
@@ -125,7 +125,7 @@ Windows PowerShell:
 venv\Scripts\activate
 ```
 
-## Cài đặt thư viện
+### Cài đặt thư viện
 
 ```bash
 pip install -r requirements.txt
@@ -139,17 +139,17 @@ pip install pandas numpy scikit-learn matplotlib seaborn scipy streamlit jupyter
 
 ---
 
-# Chạy Notebook
+## Chạy Notebook
 
-Mở thư mục notebooks/ và chạy:
+Mở thư mục `notebooks/` và chạy theo thứ tự:
 
-* preprocessing.ipynb
-* clustering.ipynb
-* visualization.ipynb
+1. `preprocessing.ipynb`
+2. `clustering.ipynb`
+3. `visualization.ipynb`
 
 ---
 
-# Chạy ứng dụng Streamlit
+## Chạy ứng dụng Streamlit
 
 ```bash
 streamlit run app/app.py
@@ -157,23 +157,22 @@ streamlit run app/app.py
 
 Sau khi chạy thành công, truy cập:
 
-```text
+```
 http://localhost:8501
 ```
 
 ---
 
-# Thành viên nhóm
+## Thành viên nhóm
 
-* Nguyễn Thị Minh Thư
-* Nguyễn Minh Quân
-* Nguyễn Xuân Phương
+* Nguyễn Thị Minh Thư – 2001230959
+* Nguyễn Minh Quân – 2001230718
+* Nguyễn Xuân Phương – 2001230703
+
 ---
 
-# Ghi chú
+## Ghi chú
 
 Dataset sử dụng:
-Online Retail II Dataset (UK Retail Transactions)
-
-```
-```
+**Retail Store Inventory Forecasting Dataset**
+Nguồn: https://www.kaggle.com/datasets/anirudhchauhan/retail-store-inventory-forecasting-dataset
