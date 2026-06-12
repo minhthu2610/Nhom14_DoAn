@@ -2,11 +2,101 @@ import streamlit as st
 import pandas as pd
 import os
 import plotly.express as px
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from utils import style_excel
 
 st.set_page_config(page_title="Nhận Diện & Khuyến Nghị Sản Phẩm", page_icon="📈", layout="wide")
 
+# ── Nạp giao diện CSS & Plotly Dark Theme ──────────────────────────────────
+css_path = os.path.join(os.path.dirname(__file__), "style.css")
+if not os.path.exists(css_path):
+    css_path = os.path.join(os.path.dirname(__file__), "..", "style.css")
+if os.path.exists(css_path):
+    with open(css_path, "r", encoding="utf-8") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+
 st.title("📈 Phân Tích Chuyên Sâu & Giải Pháp Hỗ Trợ Tồn Kho")
 st.write("Nhận diện sản phẩm bán chạy, bán chậm, tồn kho cao và đưa ra đề xuất tối ưu hóa chuỗi cung ứng.")
+
+st.markdown("### 🎯 Đề Xuất Quản Lý Tồn Kho Theo Phân Cụm")
+
+st.markdown("""
+<style>
+.strat-card {
+    background: var(--secondary-background-color);
+    border: 1px solid rgba(128, 128, 128, 0.2);
+    border-radius: 12px;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.strat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    border-color: var(--primary-color);
+}
+.strat-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.strat-content {
+    font-size: 0.95rem;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+</style>
+""", unsafe_allow_html=True)
+
+c1, c2 = st.columns(2)
+with c1:
+    st.markdown("""
+    <div class="strat-card">
+        <div class="strat-title" style="color: #2ecc71;">🟢 Cụm Bán chạy</div>
+        <div class="strat-content">
+            <b>Đặc điểm:</b> 📈 Doanh số cao, quay vòng nhanh<br/>
+            <b>Chiến lược:</b> Tăng mức tồn kho an toàn, ưu tiên cung ứng đầy đủ
+        </div>
+    </div>
+    <div class="strat-card">
+        <div class="strat-title" style="color: #e67e22;">🟠 Cụm Bán chậm</div>
+        <div class="strat-content">
+            <b>Đặc điểm:</b> 📉 Doanh số thấp, tiêu thụ chậm<br/>
+            <b>Chiến lược:</b> Giảm lượng nhập hàng, theo dõi và đánh giá lại
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with c2:
+    st.markdown("""
+    <div class="strat-card">
+        <div class="strat-title" style="color: #3498db;">🔵 Cụm Ổn định</div>
+        <div class="strat-content">
+            <b>Đặc điểm:</b> 〰️ Nhu cầu ổn định, tồn kho hợp lý<br/>
+            <b>Chiến lược:</b> Duy trì kế hoạch nhập hàng hiện tại
+        </div>
+    </div>
+    <div class="strat-card">
+        <div class="strat-title" style="color: #e74c3c;">🔴 Cụm Tồn kho cao</div>
+        <div class="strat-content">
+            <b>Đặc điểm:</b> 📦 Tồn kho rất cao, nguy cơ ứ đọng<br/>
+            <b>Chiến lược:</b> Thực hiện khuyến mãi, xả hàng, tối ưu tồn kho
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("""
+<div class="strat-card" style="border-left: 4px solid var(--primary-color);">
+    <div class="strat-content">
+        <b>💡 Ý nghĩa:</b> Khung chiến lược này giúp doanh nghiệp phân bổ nguồn lực và xây dựng kế hoạch tồn kho phù hợp cho từng nhóm sản phẩm tại từng chi nhánh một cách tổng quan nhất.
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("---")
 
 # ── Paths ───────────────────────────────────────────────────────────────────
 BASE_DIR  = os.path.dirname(__file__)
@@ -52,46 +142,46 @@ tab_best, tab_slow, tab_high_inv, tab_fill = st.tabs([
 ])
 
 with tab_best:
-    st.write("Top 10 cặp (product × store) có **total_sales** cao nhất:")
-    best_df = df.sort_values("total_sales", ascending=False).head(10)
-    st.dataframe(best_df, use_container_width=True)
+    st.write("Top 10 cặp (product × store) **thuộc cụm Bán chạy** có **total_sales** cao nhất:")
+    best_df = df[df["Cluster_Name"] == "Bán chạy"].sort_values("total_sales", ascending=False).head(10)
+    st.dataframe(style_excel(best_df.style.format(precision=4)), hide_index=True, use_container_width=True)
     fig = px.bar(
         best_df, x="product_id", y="total_sales",
         color="revenue", color_continuous_scale="Mint",
         hover_data=["store_id", "sale_frequency"],
-        title="Top 10 — Doanh số cao nhất"
+        title="Top 10 — Doanh số cao nhất (Cụm Bán chạy)"
     )
     st.plotly_chart(fig, use_container_width=True)
 
 with tab_slow:
-    st.write("Top 10 cặp (product × store) có **total_sales** thấp nhất:")
-    slow_df = df.sort_values("total_sales", ascending=True).head(10)
-    st.dataframe(slow_df, use_container_width=True)
+    st.write("Top 10 cặp (product × store) **thuộc cụm Bán chậm** có **total_sales** thấp nhất:")
+    slow_df = df[df["Cluster_Name"] == "Bán chậm"].sort_values("total_sales", ascending=True).head(10)
+    st.dataframe(style_excel(slow_df.style.format(precision=4)), hide_index=True, use_container_width=True)
     fig = px.bar(
         slow_df, x="product_id", y="total_sales",
         color="days_since_last_sale" if "days_since_last_sale" in df.columns else "fill_rate",
         color_continuous_scale="Oranges",
         hover_data=["store_id"],
-        title="Top 10 — Doanh số thấp nhất"
+        title="Top 10 — Doanh số thấp nhất (Cụm Bán chậm)"
     )
     st.plotly_chart(fig, use_container_width=True)
 
 with tab_high_inv:
-    st.write("Top 10 cặp (product × store) có **avg_inventory** cao nhất:")
-    high_inv = df.sort_values("avg_inventory", ascending=False).head(10)
-    st.dataframe(high_inv, use_container_width=True)
+    st.write("Top 10 cặp (product × store) **thuộc cụm Tồn kho cao** có **avg_inventory** cao nhất:")
+    high_inv = df[df["Cluster_Name"] == "Tồn kho cao"].sort_values("avg_inventory", ascending=False).head(10)
+    st.dataframe(style_excel(high_inv.style.format(precision=4)), hide_index=True, use_container_width=True)
     fig = px.bar(
         high_inv, x="product_id", y="avg_inventory",
         color="stock_turnover", color_continuous_scale="Reds",
         hover_data=["store_id", "total_sales"],
-        title="Top 10 — Tồn kho trung bình cao nhất"
+        title="Top 10 — Tồn kho cao nhất (Cụm Tồn kho cao)"
     )
     st.plotly_chart(fig, use_container_width=True)
 
 with tab_fill:
     st.write("Top 10 cặp (product × store) có **fill_rate** thấp nhất (không đáp ứng đủ nhu cầu):")
     low_fill = df.sort_values("fill_rate", ascending=True).head(10)
-    st.dataframe(low_fill, use_container_width=True)
+    st.dataframe(style_excel(low_fill.style.format(precision=4)), hide_index=True, use_container_width=True)
     fig = px.bar(
         low_fill, x="product_id", y="fill_rate",
         color="Cluster_Name" if "Cluster_Name" in df.columns else "total_sales",
@@ -99,12 +189,17 @@ with tab_fill:
         hover_data=["store_id", "stock_turnover"],
         title="Top 10 — Fill rate thấp nhất"
     )
+    fig.update_layout(
+        margin=dict(b=60),
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="left", x=0),
+        legend_title_text=""
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
 
 # ── Section 2: Đề xuất tồn kho ──────────────────────────────────────────────
-st.subheader("💡 Đề Xuất Tự Động Tối Ưu Hóa Tồn Kho")
+st.subheader("💡 Đề Xuất Tự Động Tối Ưu Hóa Tồn Kho (thông số cụ thể)")
 st.write(
     "Hệ thống tự động phân loại rủi ro dựa trên **total_sales**, **avg_inventory**, "
     "**stock_turnover**, và **fill_rate** (tứ phân vị 25%/75%):"
@@ -158,7 +253,7 @@ action_filter = st.selectbox("Lọc theo Phân nhóm:", all_statuses)
 
 show_df = rec_df if action_filter == "Tất cả" else rec_df[rec_df["Phân nhóm"] == action_filter]
 st.write(f"Hiển thị **{len(show_df)}** sản phẩm:")
-st.dataframe(show_df, use_container_width=True)
+st.dataframe(style_excel(show_df.style.format(precision=4)), hide_index=True, use_container_width=True)
 
 st.markdown("---")
 

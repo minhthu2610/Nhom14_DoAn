@@ -4,8 +4,20 @@ import numpy as np
 import os
 import plotly.express as px
 import plotly.graph_objects as go
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from utils import style_excel
 
 st.set_page_config(page_title="Phân Cụm Sản Phẩm", page_icon="🎯", layout="wide")
+
+# ── Nạp giao diện CSS & Plotly Dark Theme ──────────────────────────────────
+css_path = os.path.join(os.path.dirname(__file__), "style.css")
+if not os.path.exists(css_path):
+    css_path = os.path.join(os.path.dirname(__file__), "..", "style.css")
+if os.path.exists(css_path):
+    with open(css_path, "r", encoding="utf-8") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
 
 st.title("🎯 Phân Cụm Sản Phẩm — Hierarchical & K-Means")
 st.write(
@@ -90,14 +102,32 @@ if "Cluster_Name" not in df.columns:
 
     df["Cluster_Name"] = df["Cluster_HC"].map(assigned)
 
+if "Cluster_KM" in df.columns:
+    profile_km = df.groupby("Cluster_KM")[FEATURE_COLS].mean()
+    rank_sales_km = profile_km["total_sales"].rank(ascending=False)
+    rank_inv_km   = profile_km["avg_inventory"].rank(ascending=False)
+    rank_fill_km  = profile_km["fill_rate"].rank(ascending=True)
+
+    km_to_name = {}
+    used_km = set()
+    for label, rank_series in [("Bán chạy", rank_sales_km), ("Tồn kho cao", rank_inv_km), ("Bán chậm", rank_fill_km)]:
+        for cid in rank_series.sort_values().index:
+            if cid not in used_km:
+                km_to_name[cid] = label
+                used_km.add(cid)
+                break
+    for cid in profile_km.index:
+        if cid not in km_to_name:
+            km_to_name[cid] = "Ổn định"
+
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 st.sidebar.subheader("⚙️ Tuỳ chỉnh hiển thị")
 algo_choice = st.sidebar.radio(
     "Chọn thuật toán hiển thị:",
-    ["Hierarchical (Cluster_Name)", "KMeans (Cluster_KM)"],
+    ["**Hierarchical** (Cluster_Name)", "**K-Means** (Cluster_KM)"],
     index=0
 )
-use_hc = algo_choice.startswith("Hierarchical")
+use_hc = algo_choice.startswith("**Hierarchical")
 
 # ── Section 1: Tổng quan phân bố ────────────────────────────────────────────
 st.subheader("📊 Phân Bố Cụm Sản Phẩm")
@@ -107,29 +137,39 @@ col_pie, col_bar = st.columns(2)
 cluster_col = "Cluster_Name" if use_hc else "Cluster_KM"
 
 if use_hc:
-    counts = df["Cluster_Name"].value_counts().reindex(CLUSTER_ORDER, fill_value=0)
-    pie_colors = [COLORS[c] for c in counts.index]
+    counts = df["Cluster_HC"].value_counts().sort_index()
+    name_map = df.drop_duplicates("Cluster_HC").set_index("Cluster_HC")["Cluster_Name"].to_dict()
+    labels = [f"Cụm {i} ({name_map.get(i, '')})" for i in counts.index]
+    pie_colors = [COLORS[name_map.get(i, "Ổn định")] for i in counts.index]
     bar_colors = pie_colors
-    labels = counts.index.tolist()
 else:
     counts = df["Cluster_KM"].value_counts().sort_index()
-    pie_colors = px.colors.qualitative.Safe[:len(counts)]
+    labels = [f"Cụm {i} ({km_to_name[i]})" for i in counts.index]
+    pie_colors = [COLORS[km_to_name[i]] for i in counts.index]
     bar_colors = pie_colors
-    labels = [f"Cụm {i}" for i in counts.index]
 
 with col_pie:
+    color_map = {label: color for label, color in zip(labels, pie_colors)}
     fig_pie = px.pie(
         values=counts.values, names=labels,
-        color_discrete_sequence=pie_colors,
+        color=labels,
+        color_discrete_map=color_map,
         hole=0.4,
         title="Tỷ lệ phần trăm mỗi cụm"
     )
+    fig_pie.update_layout(legend=dict(
+        orientation="h",
+        yanchor="top",
+        y=-0.1,
+        xanchor="center",
+        x=0.5
+    ))
     st.plotly_chart(fig_pie, use_container_width=True)
 
 with col_bar:
     fig_bar = px.bar(
         x=labels, y=counts.values,
-        color=labels, color_discrete_sequence=bar_colors,
+        color=labels, color_discrete_map=color_map,
         text=counts.values,
         title="Số lượng cặp (product × store) mỗi cụm",
         labels={"x": "Cụm", "y": "Số điểm"}
@@ -161,11 +201,13 @@ if use_hc:
         title=f"Hierarchical Clustering — {x_axis} vs {y_axis}"
     )
 else:
-    df["_cluster_str"] = df["Cluster_KM"].apply(lambda x: f"Cụm {x}")
+    df["_cluster_str"] = df["Cluster_KM"].apply(lambda x: f"Cụm {x} ({km_to_name[x]})")
+    seq_map = {f"Cụm {i} ({km_to_name[i]})": COLORS[km_to_name[i]] for i in km_to_name.keys()}
     fig_scatter = px.scatter(
         df, x=x_axis, y=y_axis,
         color="_cluster_str",
-        color_discrete_sequence=px.colors.qualitative.Safe,
+        color_discrete_map=seq_map,
+        category_orders={"_cluster_str": [f"Cụm {i} ({km_to_name[i]})" for i in sorted(df["Cluster_KM"].unique())]},
         symbol="_cluster_str",
         hover_name="product_id",
         hover_data=["store_id"],
@@ -173,6 +215,11 @@ else:
     )
 
 fig_scatter.update_traces(marker=dict(size=10, opacity=0.85, line=dict(width=0.8, color="white")))
+fig_scatter.update_layout(
+    margin=dict(b=60),
+    legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="left", x=0),
+    legend_title_text=""
+)
 st.plotly_chart(fig_scatter, use_container_width=True)
 
 st.markdown("---")
@@ -181,11 +228,13 @@ st.markdown("---")
 st.subheader("🌡️ Profile Trung Bình Từng Cụm (Heatmap)")
 
 if use_hc:
-    profile = df.groupby("Cluster_Name")[FEATURE_COLS].mean().reindex(CLUSTER_ORDER)
-    y_labels = profile.index.tolist()
+    # Gom nhóm theo cụm số (0, 1, 2, 3) để giữ nguyên thứ tự gốc của thuật toán
+    profile = df.groupby("Cluster_HC")[FEATURE_COLS].mean().sort_index()
+    name_map = df.drop_duplicates("Cluster_HC").set_index("Cluster_HC")["Cluster_Name"].to_dict()
+    y_labels = [f"Cụm {i} ({name_map.get(i, '')})" for i in profile.index]
 else:
     profile = df.groupby("Cluster_KM")[FEATURE_COLS].mean().sort_index()
-    y_labels = [f"Cụm {i}" for i in profile.index]
+    y_labels = [f"Cụm {i} ({km_to_name[i]})" for i in profile.index]
 
 fig_heat = go.Figure(data=go.Heatmap(
     z=profile.values.round(3),
@@ -200,7 +249,8 @@ fig_heat = go.Figure(data=go.Heatmap(
 fig_heat.update_layout(
     title="Giá trị trung bình (z-score) từng feature theo cụm",
     xaxis_tickangle=-20,
-    height=300,
+    yaxis=dict(autorange="reversed"),
+    height=320,
     margin=dict(l=10, r=10, t=50, b=10)
 )
 st.plotly_chart(fig_heat, use_container_width=True)
@@ -228,7 +278,7 @@ if "Cluster_Name" in filtered_df.columns:
     display_cols += ["Cluster_Name", "Cluster_HC", "Cluster_KM"]
 
 st.write(f"Hiển thị **{len(filtered_df)}** cặp (product × store):")
-st.dataframe(filtered_df[display_cols].reset_index(drop=True), use_container_width=True)
+st.dataframe(style_excel(filtered_df[display_cols].style.format(precision=4)), hide_index=True, use_container_width=True)
 
 csv_data = filtered_df[display_cols].to_csv(index=False).encode("utf-8")
 st.download_button(

@@ -8,6 +8,15 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Visualization Chuyên Sâu", page_icon="📉", layout="wide")
 
+# ── Nạp giao diện CSS & Plotly Dark Theme ──────────────────────────────────
+css_path = os.path.join(os.path.dirname(__file__), "style.css")
+if not os.path.exists(css_path):
+    css_path = os.path.join(os.path.dirname(__file__), "..", "style.css")
+if os.path.exists(css_path):
+    with open(css_path, "r", encoding="utf-8") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+
 st.title("📉 Visualization Chuyên Sâu")
 st.write(
     "Biểu đồ phân tích từ `visualization.ipynb`: phân bố theo category/region, "
@@ -104,7 +113,11 @@ with tab1:
                 title="Số lượng tuyệt đối",
                 labels={"value": "Số điểm", "variable": "Cụm"}
             )
-            fig.update_layout(xaxis_tickangle=-30)
+            fig.update_layout(
+                xaxis_tickangle=-30,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+                legend_title_text=""
+            )
             st.plotly_chart(fig, use_container_width=True)
 
         with col2:
@@ -118,7 +131,11 @@ with tab1:
                 title="Tỷ lệ phần trăm (%)",
                 labels={"value": "%", "variable": "Cụm"}
             )
-            fig2.update_layout(xaxis_tickangle=-30)
+            fig2.update_layout(
+                xaxis_tickangle=-30,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+                legend_title_text=""
+            )
             st.plotly_chart(fig2, use_container_width=True)
     else:
         st.info("Cần file `retail_store_inventory.csv` trong `data/raw/` để hiển thị biểu đồ này.")
@@ -144,6 +161,10 @@ with tab2:
                 title="Số lượng tuyệt đối",
                 labels={"value": "Số điểm", "variable": "Cụm"}
             )
+            fig.update_layout(
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+                legend_title_text=""
+            )
             st.plotly_chart(fig, use_container_width=True)
 
         with col2:
@@ -156,6 +177,10 @@ with tab2:
                 barmode="stack",
                 title="Tỷ lệ phần trăm (%)",
                 labels={"value": "%", "variable": "Cụm"}
+            )
+            fig2.update_layout(
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+                legend_title_text=""
             )
             st.plotly_chart(fig2, use_container_width=True)
 
@@ -212,7 +237,10 @@ with tab3:
         fig.update_layout(
             title="Xu hướng doanh thu theo tháng theo cụm",
             xaxis_title="Tháng", yaxis_title="Doanh thu (tổng)",
-            legend_title="Cụm", hovermode="x unified"
+            hovermode="x unified",
+            yaxis=dict(range=[0, monthly["revenue_raw"].max() * 1.1]),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+            legend_title_text=""
         )
         st.plotly_chart(fig, use_container_width=True)
     else:
@@ -243,7 +271,8 @@ with tab4:
                 orientation="h",
                 color_discrete_sequence=[COLORS[name]],
                 text=top5["revenue_raw"].apply(lambda v: f"{v:,.0f}"),
-                title=f"Top 5 — {name}"
+                title=f"Top 5 — {name}",
+                labels={"revenue_raw": "Doanh thu", "label": ""}
             )
             fig.update_layout(yaxis=dict(autorange="reversed"), showlegend=False, height=280,
                                margin=dict(l=10, r=10, t=40, b=10))
@@ -260,7 +289,8 @@ with tab4:
                 sub, x="total_sales", y="label",
                 orientation="h",
                 color_discrete_sequence=[COLORS[name]],
-                title=f"Top 5 — {name} (total_sales z-score)"
+                title=f"Top 5 — {name} (total_sales z-score)",
+                labels={"total_sales": "Tổng doanh số", "label": ""}
             )
             fig.update_layout(yaxis=dict(autorange="reversed"), showlegend=False, height=280,
                                margin=dict(l=10, r=10, t=40, b=10))
@@ -291,8 +321,12 @@ with tab5:
             labels={"fill_rate": "Fill rate (z-score)", "label": ""}
         )
         fig1.add_vline(x=0, line_dash="dash", line_color="black", line_width=1)
-        fig1.update_layout(yaxis=dict(autorange="reversed"), legend_title="Cụm",
-                           height=450, margin=dict(l=10, r=10, t=50, b=10))
+        fig1.update_layout(
+            yaxis=dict(autorange="reversed"),
+            height=450, margin=dict(l=10, r=10, t=50, b=60),
+            legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="left", x=0),
+            legend_title_text=""
+        )
         st.plotly_chart(fig1, use_container_width=True)
 
     with col2:
@@ -306,8 +340,12 @@ with tab5:
             labels={"stock_turnover": "Stock turnover (z-score)", "label": ""}
         )
         fig2.add_vline(x=0, line_dash="dash", line_color="black", line_width=1)
-        fig2.update_layout(yaxis=dict(autorange="reversed"), legend_title="Cụm",
-                           height=450, margin=dict(l=10, r=10, t=50, b=10))
+        fig2.update_layout(
+            yaxis=dict(autorange="reversed"),
+            height=450, margin=dict(l=10, r=10, t=50, b=60),
+            legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="left", x=0),
+            legend_title_text=""
+        )
         st.plotly_chart(fig2, use_container_width=True)
 
     st.markdown("---")

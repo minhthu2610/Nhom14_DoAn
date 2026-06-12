@@ -1,0 +1,154 @@
+/* Nền chung - Tự động theo Theme (Light/Dark) */
+.stApp {
+    font-family: var(--font), 'Inter', sans-serif;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    border-right: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+/* Khung màu cho Tiêu đề Sidebar (QUẢN LÝ TỒN KHO) */
+[data-testid="stSidebarNav"]::before {
+    content: "📦 QUẢN LÝ TỒN KHO";
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-color);
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.15), rgba(52, 152, 219, 0.15));
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1.5rem 1.5rem 1rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Tạo khung viền (card) cho các mục menu trong Sidebar */
+[data-testid="stSidebarNav"] ul li {
+    margin: 8px 16px;
+}
+
+[data-testid="stSidebarNav"] a {
+    background: var(--secondary-background-color);
+    border: 1px solid rgba(128, 128, 128, 0.2) !important;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    font-size: 1.05rem;
+    font-weight: 500;
+    padding: 10px 15px;
+}
+
+[data-testid="stSidebarNav"] a:hover {
+    transform: translateX(5px);
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Trạng thái Active (Trang đang mở) */
+[data-testid="stSidebarNav"] a[aria-current="page"] {
+    background: rgba(128, 128, 128, 0.15) !important;
+    border: 1px solid var(--primary-color) !important;
+    border-left: 5px solid var(--primary-color) !important;
+    font-weight: 700;
+}
+
+/* Tăng khoảng cách cho các nút Radio (Thuật toán) */
+[data-testid="stRadio"] label {
+    margin-bottom: 12px;
+}
+
+/* Các thẻ Metric (KPI Cards) */
+[data-testid="stMetric"] {
+    background: var(--secondary-background-color);
+    border: 1px solid rgba(128, 128, 128, 0.2);
+    border-radius: 12px;
+    padding: 15px 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+[data-testid="stMetric"]:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    border-color: var(--primary-color);
+}
+
+[data-testid="stMetricValue"] {
+    font-size: 2.2rem !important;
+    font-weight: 700 !important;
+    color: var(--primary-color) !important;
+}
+
+[data-testid="stMetricLabel"] {
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    color: var(--text-color) !important;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Headers */
+h1 {
+    font-weight: 800;
+    margin-bottom: 20px;
+}
+h2, h3 {
+    font-weight: 600;
+}
+
+/* Các button */
+.stButton>button {
+    border-radius: 8px;
+    font-weight: 600;
+    transition: opacity 0.3s ease, transform 0.1s ease;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--primary-color);
+}
+.stButton>button:hover {
+    transform: scale(1.02);
+    border: 1px solid var(--primary-color);
+}
+
+/* Tabs */
+div[data-baseweb="tab_list"] {
+    gap: 10px;
+    margin-bottom: 20px;
+}
+div[data-baseweb="tab"] {
+    background: var(--secondary-background-color);
+    border-radius: 8px;
+    padding: 10px 20px;
+    border: 1px solid rgba(128, 128, 128, 0.2);
+    transition: all 0.3s ease;
+}
+div[data-baseweb="tab"]:hover {
+    background: rgba(128, 128, 128, 0.1);
+}
+div[data-baseweb="tab"][aria-selected="true"] {
+    border: 1px solid var(--primary-color);
+    background: transparent;
+}
+
+/* Expander */
+[data-testid="stExpander"] {
+    border: 1px solid rgba(128, 128, 128, 0.2);
+    border-radius: 8px;
+    background: var(--secondary-background-color);
+}
+
+/* Khung hiển thị Plotly / Chart */
+.stPlotlyChart {
+    border-radius: 12px;
+    background: var(--background-color);
+    padding: 10px;
+    border: 1px solid rgba(128, 128, 128, 0.2);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Inputs */
+[data-baseweb="input"] {
+    border-radius: 6px;
+}

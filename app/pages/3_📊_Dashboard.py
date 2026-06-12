@@ -2,8 +2,20 @@ import streamlit as st
 import pandas as pd
 import os
 import plotly.express as px
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from utils import style_excel
 
 st.set_page_config(page_title="Dashboard Tổng Quan", page_icon="📊", layout="wide")
+
+# ── Nạp giao diện CSS & Plotly Dark Theme ──────────────────────────────────
+css_path = os.path.join(os.path.dirname(__file__), "style.css")
+if not os.path.exists(css_path):
+    css_path = os.path.join(os.path.dirname(__file__), "..", "style.css")
+if os.path.exists(css_path):
+    with open(css_path, "r", encoding="utf-8") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
 
 st.title("📊 Dashboard Phân Tích Tổng Quan")
 st.write("Hiển thị các chỉ số KPI, phân phối features và công cụ tìm kiếm sản phẩm.")
@@ -64,19 +76,23 @@ st.subheader("💡 Chỉ Số Vận Hành Thiết Yếu")
 
 if kpis:
     # KPI từ raw data — giá trị thực, có ý nghĩa
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("📦 Tổng sản phẩm", kpis["n_products"])
     with col2:
         st.metric("🏪 Số cửa hàng", kpis["n_stores"])
     with col3:
-        st.metric("💰 Tổng doanh thu", f"{kpis['total_revenue']:,.0f}")
-    with col4:
-        st.metric("📊 Tổng units bán", f"{kpis['total_units_sold']:,.0f}")
-    with col5:
-        st.metric("📈 TB units/giao dịch", f"{kpis['avg_units_sold']:.1f}")
-    with col6:
         st.metric("🗓️ Khoảng thời gian", kpis["date_range"])
+
+    st.write("") # Thêm khoảng trắng nhỏ giữa 2 dòng
+
+    col4, col5, col6 = st.columns(3)
+    with col4:
+        st.metric("💰 Tổng doanh thu", f"{kpis['total_revenue']:,.0f}")
+    with col5:
+        st.metric("📊 Tổng units bán", f"{kpis['total_units_sold']:,.0f}")
+    with col6:
+        st.metric("📈 TB units/giao dịch", f"{kpis['avg_units_sold']:.1f}")
 
     st.caption(f"Tồn kho TB: **{kpis['avg_inventory']:.1f}** units  |  Giá TB: **{kpis['avg_price']:.2f}**  |  Dữ liệu đã chuẩn hóa: **{len(df)} cặp** (product × store)")
 
@@ -165,6 +181,10 @@ fig_scatter = px.scatter(
     title=f"Scatter: {x_axis} vs {y_axis}"
 )
 fig_scatter.update_traces(marker=dict(size=8, line=dict(width=0.5, color="white")))
+fig_scatter.update_layout(
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+    legend_title_text=""
+)
 st.plotly_chart(fig_scatter, use_container_width=True)
 
 st.markdown("---")
@@ -187,12 +207,13 @@ if search_sid:
 if search_pid or search_sid:
     if not filtered.empty:
         st.write(f"Tìm thấy **{len(filtered)}** kết quả:")
-        st.dataframe(filtered, use_container_width=True)
+        st.dataframe(style_excel(filtered.style.format(precision=4)), hide_index=True, use_container_width=True)
     else:
         st.warning("Không tìm thấy kết quả phù hợp.")
 else:
     st.write(f"Top 10 cặp (product × store) có **total_sales** cao nhất:")
     st.dataframe(
-        df.sort_values("total_sales", ascending=False).head(10),
+        style_excel(df.sort_values("total_sales", ascending=False).head(10).style.format(precision=4)),
+        hide_index=True,
         use_container_width=True
     )
